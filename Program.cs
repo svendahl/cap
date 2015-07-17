@@ -13,6 +13,8 @@
 				System.Environment.Exit(-1);
 			}
 
+
+
 			string command = args[0];
 			string loadname = args[1];
 			string savename = args[2];
@@ -114,7 +116,7 @@
 
 		private static void PrintUsage()
 		{
-			System.Console.WriteLine("cap v1.0");
+			System.Console.WriteLine("cap v1.1");
 			System.Console.WriteLine();
 			System.Console.WriteLine("Usage: cap d|e infile outfile");
 		}

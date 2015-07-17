@@ -1,19 +1,12 @@
 ; configurable depacker
 ; use 64tass v1.5+
 
-; results for vintage data
-; compression ratio: 1.95:1 or ~15.5 bits per byte
-; decompression speed: ~13.5 kb per second
-; ~ 71 cycles per decompressed byte
-; ~ 139 cycles per compressed byte
-
 ; configuration options
 apd_conf_z_bitbuffer	= 1	; 0 = normal memory, 1 = zeropage
 apd_conf_z_lwm	= 1	; 0 = normal memory, 1 = zeropage
 apd_conf_z_length	= 1	; 0 = self modifying code, 1 = zeropage
 apd_conf_z_offset	= 1	; 0 = self modifying code, 1 = zeropage
 apd_conf_getbit_inline	= 1	; 0 = subroutine, 1 = inlined
-apd_conf_blength	= 0	; 0 = 16 bit lengths, 1 = 8 bit lengths
 
 
 
@@ -110,10 +103,11 @@ apd_large_match		; #10
 	jsr apd_getgamma	; offs = getGamma();
 	cmp #2	; if ((lwm == 0) && (offs == 2)) {
 	bne apd_offset_match
+.if apd_conf_z_lwm = 0
+apd_conf_z_lwm = * + 1
+.fi
 	cpy apd_lwm
 	bne apd_offset_match
-;	cpy apd_length_h	; (offset + 1)
-;	bne apd_offset_match
 
 ; -------------------
 ; repeat offset match
@@ -232,9 +226,6 @@ apd_cm_loop2	lda (apd_source),y
 apd_cm_end
 	ldy #0
 	jmp apd_read_flag
-.if apd_conf_z_lwm = 0
-apd_lwm	.byte 0
-.fi
 
 ; ------
 ; getbit

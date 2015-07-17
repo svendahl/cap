@@ -8,28 +8,28 @@ namespace cap
 
 
 
-		private readonly byte[] _input;
-		private int _inptr;
-		private byte _bitbuffer;
-		private int _bitcount;
+		private readonly byte[] input;
 
 
 
-		private int _lwm;
-		private int _r0;
+		private byte bitbuffer;
+		private int bitcount;
+		private int inptr;
+		private int lwm;
+		private int roffs;
 
 
 
 		private int getbit()
 		{
-			if (_bitcount-- == 0)
+			if (bitcount-- == 0)
 			{
-				_bitbuffer = getbyte();
-				_bitcount = 7;
+				bitbuffer = getbyte();
+				bitcount = 7;
 			}
 
-			int bit = (_bitbuffer >> 7) & 1;
-			_bitbuffer <<= 1;
+			int bit = (bitbuffer >> 7) & 1;
+			bitbuffer <<= 1;
 
 			return bit;
 		}
@@ -38,11 +38,11 @@ namespace cap
 
 		private byte getbyte()
 		{
-			if (_inptr < 0 && _inptr >= _input.Length)
+			if (inptr < 0 && inptr >= input.Length)
 			{
 				throw new Exception("decap getbyte b0rk");
 			}
-			return _input[_inptr++];
+			return input[inptr++];
 		}
 
 
@@ -65,31 +65,29 @@ namespace cap
 
 		public decap(byte[] input)
 		{
-			_input = input;
+			this.input = input;
 		}
 
 
 
 		public byte[] depack()
 		{
-			//var parse = new List<Tuple<int, int>>();
 			var output = new List<byte>();
 
-			_inptr = 0;
-			_lwm = 0;
-			_r0 = 0;
+			inptr = 0;
+			lwm = 0;
+			roffs = 0;
 
-			// load address
 			output.Add(getbyte());
 			output.Add(getbyte());
 
-			// first literal
 			output.Add(getbyte());
 
 			int offs = 0;
 			int len = 0;
 
 			bool done = false;
+
 			while (!done)
 			{
 				int pfx = 0;
@@ -100,18 +98,16 @@ namespace cap
 				switch (pfx)
 				{
 					case 0:
-						//parse.Add(new Tuple<int, int>(1, 0));
 						output.Add(getbyte());
-						_lwm = 0;
+						lwm = 0;
 						break;
 
 					case 1:
 						offs = getgamma();
-						if (_lwm == 0 && offs == 2)
+						if (lwm == 0 && offs == 2)
 						{
-							offs = _r0;
+							offs = roffs;
 							len = getgamma();
-							//parse.Add(new Tuple<int, int>(len, offs));
 							while (len-- > 0)
 							{
 								output.Add(output[output.Count - offs]);
@@ -119,7 +115,7 @@ namespace cap
 						}
 						else
 						{
-							offs -= _lwm == 0 ? 3 : 2;
+							offs -= lwm == 0 ? 3 : 2;
 							offs <<= 8;
 							offs |= getbyte();
 							len = getgamma();
@@ -131,21 +127,19 @@ namespace cap
 							{
 								len += 1;
 							}
-							//parse.Add(new Tuple<int, int>(len, offs));
 							while (len-- > 0)
 							{
 								output.Add(output[output.Count - offs]);
 							}
-							_r0 = offs;
+							roffs = offs;
 						}
-						_lwm = 1;
+						lwm = 1;
 						break;
 
 					case 2:
 						offs = getbyte();
 						len = 2 + (offs & 1);
 						offs >>= 1;
-						//parse.Add(new Tuple<int, int>(len, offs));
 						if (offs > 0)
 						{
 							while (len-- > 0)
@@ -158,8 +152,8 @@ namespace cap
 							done = true;
 						}
 
-						_r0 = offs;
-						_lwm = 1;
+						roffs = offs;
+						lwm = 1;
 						break;
 
 					case 3:
@@ -170,8 +164,6 @@ namespace cap
 							offs |= getbit();
 						}
 
-						//parse.Add(new Tuple<int, int>(1, offs));
-
 						if (offs > 0)
 						{
 							output.Add(output[output.Count - offs]);
@@ -180,13 +172,11 @@ namespace cap
 						{
 							output.Add(0);
 						}
-						_lwm = 0;
+						lwm = 0;
 						break;
 
 					default:
 						throw new Exception("decap depack b0rk");
-						break;
-
 				}
 			}
 

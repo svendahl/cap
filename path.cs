@@ -3,101 +3,191 @@ using System.Collections.Generic;
 
 namespace cap
 {
-	static class path
+	class path
 	{
 
 
 
-		public static Tuple<int, int>[] dijkstra(byte[] input, SortedDictionary<int, int>[] edges)
+		private readonly bool[] closed;
+		private readonly int[] cost;
+		private const int cost_tolerance = 10;
+		private readonly edge edge;
+		private readonly byte[] input;
+		private readonly Dictionary<int, state>[] tree;
+
+
+
+		public path(byte[] input)
 		{
-			var node = new Dictionary<ulong, state>[input.Length + 1];
-			var cost = new int[input.Length + 1];
+			this.input = input;
+			closed = new bool[input.Length + 1];
+			cost = new int[input.Length + 1];
+			edge = new edge(input);
+			tree = new Dictionary<int, state>[input.Length + 1];
+
 			for (int i = 0; i < input.Length + 1; i++)
 			{
-				node[i] = new Dictionary<ulong, state>();
-				cost[i] = int.MaxValue;
-			}
-			cost[0] = 0;
-
-			var current_state = new state(input, 0, 0);
-			node[0].Add(current_state.key, current_state);
-
-			var queue = new pqueue<int, state>(0, new state(new byte[0], 0, 0));
-
-			int edgecount = 0;
-
-			while (current_state.position < input.Length)
-			{
-				if (current_state.bitcost == cost[current_state.position])
-				{
-					foreach (Tuple<int, int> t in edge.edges(edges[current_state.position], current_state.r0))
-					{
-						int length = t.Item1;
-						int offset = t.Item2;
-
-						edgecount++;
-
-						int edge_dest = current_state.position + length;
-
-						if (offset == current_state.offset && offset > 0 || current_state.bitcost > cost[edge_dest])
-						{
-							continue;
-						}
-
-						int edge_cost = model.edge_cost(length, offset, current_state);
-
-						if (edge_cost > 0 && current_state.bitcost + edge_cost <= cost[edge_dest])
-						{
-							var dest_state = new state(current_state);
-							dest_state.add(length, offset, current_state.bitcost + edge_cost);
-
-							if (dest_state.bitcost < cost[dest_state.position])
-							{
-								cost[dest_state.position] = dest_state.bitcost;
-								node[dest_state.position].Clear();
-							}
-
-							if (dest_state.bitcost == cost[dest_state.position])
-							{
-								if (!node[dest_state.position].ContainsKey(dest_state.key))
-								{
-									node[edge_dest].Add(dest_state.key, dest_state);
-									queue.enqueue(dest_state.bitcost, dest_state);
-								}
-								else
-								{
-									if (dest_state.steps < node[dest_state.position][dest_state.key].steps)
-									{
-										node[dest_state.position][dest_state.key] = dest_state;
-									}
-								}
-							}
-						}
-					}
-				}
-				current_state = queue.dequeue();
+				closed[i] = false;
+				cost[i] = i * 10;
+				tree[i] = new Dictionary<int, state>();
 			}
 
-			var output = new List<Tuple<int, int>>();
-			while (current_state.pkey != 0)
-			{
-				output.Add(new Tuple<int, int>(current_state.length, current_state.offset));
-				current_state = node[current_state.position - current_state.length][current_state.pkey];
-			}
-
-			output.Reverse();
-
-			if (!verify(input, output))
-			{
-				throw new Exception("path b0rk");
-			}
-
-			return output.ToArray();
+			tree[0].Add(0, new state(input));
 		}
 
 
 
-		static public bool verify(byte[] input, List<Tuple<int,int>> path)
+		public Tuple<int,int>[] output()
+		{
+			int cpos = 0;
+
+			while (cpos < input.Length)
+			{
+				int cend = cpos + 1;
+				while (cend < input.Length && edge.oe[cend].Length == 0)
+				{
+					cend++;
+				}
+				while (cend < input.Length && edge.oe[cend].Length != 0)
+				{
+					cend++;
+				}
+				subpath(cpos, ref cend);
+				cpos = cend;
+			}
+
+			var output = collect();
+
+			if (!verify(input, output))
+			{
+				throw new Exception("mpath b0rk");
+			}
+
+			return output;
+		}
+
+
+
+		private void subpath(int cpos, ref int cend)
+		{
+			var queue = new pqueue<int, int>(0, 0);
+			var cendqueue = new pqueue<int, int>(0, 0);
+
+			foreach(KeyValuePair<int, state> kvp in tree[cpos])
+			{
+				queue.enqueue(kvp.Value.bitcost, kvp.Value.position);
+			}
+
+			while (!queue.empty)
+			{
+				cpos = queue.dequeue().Item2;
+
+				if (!closed[cpos])
+				{
+					foreach (KeyValuePair<int, state> kvp in tree[cpos])
+					{
+						int roffs = kvp.Key;
+						state cstate = kvp.Value;
+
+						if (cstate.bitcost <= cost[cpos] + cost_tolerance)
+						{
+							foreach (Tuple<int, Tuple<int, int>> ccostedge in edge.edges(cstate))
+							{
+								int cedgecost = ccostedge.Item1;
+								Tuple<int, int> cedge = ccostedge.Item2;
+
+								if (!closed[cstate.position + cedge.Item1] && cstate.bitcost + cedgecost <= cost[cstate.position + cedge.Item1] + cost_tolerance)
+								{
+									var dstate = new state(cstate, ccostedge);
+
+									int tl = dstate.position;
+									while (tl > cstate.position)
+									{
+										cost[tl] = dstate.bitcost < cost[tl] ? dstate.bitcost : cost[tl];
+										tl--;
+									}
+
+									if (!tree[dstate.position].ContainsKey(dstate.roffs))
+									{
+										tree[dstate.position].Add(dstate.roffs, dstate);
+									}
+									else if (dstate.bitcost < tree[dstate.position][dstate.roffs].bitcost || (dstate.bitcost == tree[dstate.position][dstate.roffs].bitcost && dstate.steps < tree[dstate.position][dstate.roffs].steps))
+									{
+										tree[dstate.position][dstate.roffs] = dstate;
+									}
+
+									if (dstate.position < cend)
+									{
+										queue.enqueue(dstate.bitcost, dstate.position);
+									}
+									else if (dstate.position == cend)
+									{
+										cendqueue.enqueue(dstate.bitcost, dstate.position);
+									}
+									else if (dstate.position > cend)
+									{
+										if (!cendqueue.empty)
+										{
+											var t = cendqueue.dequeue();
+											queue.enqueue(t.Item1, t.Item2);
+										}
+
+										while (!cendqueue.empty)
+										{
+											cendqueue.dequeue();
+										}
+
+										cend = dstate.position;
+										cendqueue.enqueue(dstate.bitcost, dstate.position);
+									}
+									/*else
+									{
+										throw new Exception("head blown");
+									}*/
+								}
+							}
+						}
+					}
+					closed[cpos] = true;
+				}
+			}
+		}
+
+
+
+		private Tuple<int,int>[] collect()
+		{
+			int cpos = tree.Length - 1;
+			int bsc = int.MaxValue;
+			int bss = int.MaxValue;
+			int k = 0;
+
+			foreach (KeyValuePair<int, state> kvp in tree[cpos])
+			{
+				if (kvp.Value.bitcost < bsc || kvp.Value.bitcost == bsc && kvp.Value.steps < bss)
+				{
+					k = kvp.Key;
+					bsc = kvp.Value.bitcost;
+					bss = kvp.Value.steps;
+				}
+			}
+
+			state cs = tree[cpos][k];
+			var output = new Tuple<int, int>[cs.steps];
+
+			while (cpos > 0)
+			{
+				output[cs.steps - 1] = new Tuple<int, int>(cs.length, cs.offset);
+				cpos -= cs.length;
+				cs = tree[cpos][cs.pkey];
+			}
+
+			return output;
+		}
+
+
+
+		static private bool verify(byte[] input, Tuple<int, int>[] path)
 		{
 			int i = 0;
 
@@ -111,7 +201,7 @@ namespace cap
 					int ci = i - offset;
 					for (int l = 0; l < length; l++)
 					{
-						if (input[i+l] != input[ci+l])
+						if (input[i + l] != input[ci + l])
 						{
 							return false;
 						}

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace cap
 {
@@ -10,13 +9,11 @@ namespace cap
 
 		public static byte[] encode(byte[] data)
 		{
-			byte[] input;
-			ushort loadaddress;
-			input = new byte[data.Length - 2];
+			var input = new byte[data.Length - 2];
 			Array.Copy(data, 2, input, 0, input.Length);
-			loadaddress = (ushort)(data[0] | data[1] << 8);
+			var loadaddress = (ushort)(data[0] | data[1] << 8);
 
-			var output = model.tobinary(input, model.parse(input), loadaddress);
+			var output = new tobinary(input, model.parse(input), loadaddress).output;
 
 			if (!verify(data, output))
 			{

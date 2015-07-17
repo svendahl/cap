@@ -21,12 +21,19 @@ namespace cap
 
 
 
-		public Tv dequeue()
+		public int count
 		{
-			Tv output;
+			get { return _k.Count - 1; }
+		}
+
+
+
+		public Tuple<Tk,Tv> dequeue()
+		{
+			Tuple<Tk,Tv> output;
 			if (_v.Count > 1)
 			{
-				output = _v[1];
+				output = new Tuple<Tk, Tv>(_k[1], _v[1]);
 
 				_k[1] = _k[_k.Count - 1];
 				_v[1] = _v[_v.Count - 1];
@@ -39,7 +46,15 @@ namespace cap
 			{
 				throw new Exception("Queue empty");
 			}
+
 			return output;
+		}
+
+
+
+		public bool empty
+		{
+			get { return _k.Count == 1; }
 		}
 
 
@@ -106,6 +121,7 @@ namespace cap
 		private void levelup(int index)
 		{
 			int parent = parentof(index);
+
 			while (parent >= 1)
 			{
 				if (_k[index].CompareTo(_k[parent]) > 0)
