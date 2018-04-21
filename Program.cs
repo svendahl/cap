@@ -1,4 +1,6 @@
-﻿namespace cap
+﻿using System;
+
+namespace cap
 {
 	class Program
 	{
@@ -116,7 +118,7 @@
 
 		private static void PrintUsage()
 		{
-			System.Console.WriteLine("cap v1.1");
+			System.Console.WriteLine("cap v1.2");
 			System.Console.WriteLine();
 			System.Console.WriteLine("Usage: cap d|e infile outfile");
 		}
@@ -126,16 +128,16 @@
 		private static bool ValidInput(string[] input)
 		{
 			return (
-					input.Length == 3 &&
-					input[0].Length == 1 &&
-					(input[0] == "e" || input[0] == "d") &&
-					System.IO.File.Exists(input[1]) &&
-					//!System.IO.File.Exists(input[2]) &&
-					!input[1].Equals(input[2])
-					);
+				input.Length == 3 &&
+				input[0].Length == 1 &&
+				(input[0] == "e" || input[0] == "d") &&
+				System.IO.File.Exists(input[1]) &&
+				//!System.IO.File.Exists(input[2]) &&
+				!input[1].Equals(input[2])
+			);
 		}
 
 
 
-	} // class
-} // namespace
+	}
+}

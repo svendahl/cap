@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace cap
 {
@@ -40,8 +42,8 @@ namespace cap
 			bitbuffer_ptr = result.Count;
 			result.Add(0);
 
-			state = new state(input);
-			state = new state(state, path[0]);
+			state = new state();
+			state = new state(state, path[0], input);
 
 			for (int i = 1; i < path.Length; i++)
 			{
@@ -65,14 +67,14 @@ namespace cap
 			int length = edge.Item1;
 			int offset = edge.Item2;
 
-			if (!model.edge_valid(length, offset, state))
+			if (!model.valid(state, length, offset))
 			{
 				throw new Exception("wat!");
 			}
 
 			if (length == 1)
 			{
-				if (offset == 0 && !state.posis0)
+				if (offset == 0 && input[state.index] != 0x00)
 				{
 					putbits(constant.prefixcode_literal);
 					result.Add(input[input_ptr]);
@@ -92,7 +94,7 @@ namespace cap
 				putgbits(2);
 				putgbits(length);
 			}
-			else if (length >= 2 && length <= 3 && offset > 0 && offset < 128)
+			else if (length >= 2 && length <= 3 && offset > 0 && offset < constant.threshold_shortmatch_offset)
 			{
 				putbits(constant.prefixcode_short_match);
 				result.Add((byte)(offset << 1 | (length & 1)));
@@ -102,9 +104,9 @@ namespace cap
 				putbits(constant.prefixcode_normal_match);
 				putgbits((offset >> 8) + (state.lwm == 0 ? 3 : 2));
 				result.Add((byte)(offset & 0xff));
-				putgbits(length - (offset < 128 || offset >= 32000 ? 2 : offset >= 1280 ? 1 : 0));
+				putgbits(length - (offset < constant.threshold_shortmatch_offset || offset >= constant.threshold_length3match_offset ? 2 : offset >= constant.threshold_length2match_offset ? 1 : 0));
 			}
-			state = new state(state, edge);
+			state = new state(state, edge, input);
 			input_ptr += length;
 		}
 
@@ -140,7 +142,7 @@ namespace cap
 		private void putgbits(int input)
 		{
 			int msb = 15;
-			while (input >> msb-- == 0) {}
+			while (input >> msb-- == 0) { }
 
 			while (msb >= 0)
 			{
@@ -153,5 +155,5 @@ namespace cap
 
 
 
-	} // class
-} // namespace
+	}
+}

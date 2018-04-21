@@ -119,11 +119,11 @@ namespace cap
 							offs <<= 8;
 							offs |= getbyte();
 							len = getgamma();
-							if (offs < 128 || offs >= 32000)
+							if (offs < constant.threshold_shortmatch_offset || offs >= constant.threshold_length3match_offset)
 							{
 								len += 2;
 							}
-							else if (offs >= 1280)
+							else if (offs >= constant.threshold_length2match_offset)
 							{
 								len += 1;
 							}
@@ -185,5 +185,5 @@ namespace cap
 
 
 
-	} // class
-} // namespace
+	}
+}

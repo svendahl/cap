@@ -1,6 +1,6 @@
 ﻿namespace cap
 {
-	static class constant
+	class constant
 	{
 
 
@@ -11,12 +11,13 @@
 		public readonly static int[] prefixcode_byte_match = new int[3] { 1, 1, 1 };
 
 
-
+	
 		public const int bitcost_prefixcode_literal = 1;
 		public const int bitcost_prefixcode_normalmatch = 2;
 		public const int bitcost_prefixcode_shortmatch = 3;
 		public const int bitcost_prefixcode_bytematch = 3;
 		public const int bitcost_offset_bytematch = 4;
+		public const int bitcost_offset_shortmatch = 8;
 		public const int bitcost_literal = 8;
 
 
@@ -26,8 +27,15 @@
 		public const int threshold_length2match_offset = 1280;
 		public const int threshold_length3match_offset = 32000;
 		public const int threshold_offset = 65024;
+		public const int threshold_greedy_length = 255;
+		public const int threshold_gap_length = 24;
 
 
 
-	} // class
-} // namespace
+		public const int repeat_offset_gap_bitcost_maxdeviation = 24;
+		public const int repeat_offset_edge_bitcost_maxdeviation = 18;
+
+
+
+	}
+}
