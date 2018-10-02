@@ -26,14 +26,11 @@ namespace cap
 
 
 
-		public tobinary(byte[] input, Tuple<int, int>[] path, ushort loadaddress)
+		public tobinary(byte[] input, Tuple<int, int>[] path)
 		{
 			this.input = input;
 
 			result = new List<byte>();
-
-			result.Add((byte)(loadaddress & 0xff));
-			result.Add((byte)(loadaddress >> 8));
 
 			result.Add(input[0]);
 			input_ptr = 1;

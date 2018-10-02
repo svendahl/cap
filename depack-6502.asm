@@ -43,10 +43,10 @@ apd_dest_h	= apd_dest + 1
 	sta apd_getbyte + 1
 	sty apd_getbyte + 2
 
-	jsr apd_getbyte
-	sta apd_dest_l
-	jsr apd_getbyte
-	sta apd_dest_h
+	;jsr apd_getbyte
+	;sta apd_dest_l
+	;jsr apd_getbyte
+	;sta apd_dest_h
 
 	ldy #0
 	sty apd_bitbuffer

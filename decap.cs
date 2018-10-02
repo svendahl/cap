@@ -79,9 +79,6 @@ namespace cap
 			roffs = 0;
 
 			output.Add(getbyte());
-			output.Add(getbyte());
-
-			output.Add(getbyte());
 
 			int offs = 0;
 			int len = 0;

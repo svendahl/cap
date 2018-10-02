@@ -9,11 +9,7 @@ namespace cap
 		
 		public static byte[] encode(byte[] data)
 		{
-			var input = new byte[data.Length - 2];
-			Array.Copy(data, 2, input, 0, input.Length);
-			var loadaddress = (ushort)(data[0] | data[1] << 8);
-
-			var output = new tobinary(input, new path(input).output(), loadaddress).output;
+			var output = new tobinary(data, new path(data).output()).output;
 
 			if (!verify(data, output))
 			{
