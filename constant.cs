@@ -27,7 +27,7 @@
 		public const int threshold_length2match_offset = 1280;
 		public const int threshold_length3match_offset = 32000;
 		public const int threshold_offset = 65024;
-		public const int threshold_greedy_length = 255;
+		public const int threshold_greedy_length = 65535; //255; a workaround for a bug that kills compression on some highly compressible files
 		public const int threshold_gap_length = 24;
 
 
